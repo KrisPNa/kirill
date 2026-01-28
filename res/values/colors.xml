@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Основные цвета -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Цвета для приложения MacroRecorder -->
+    <color name="primary">#FF4081</color>
+    <color name="primary_dark">#F50057</color>
+    <color name="primary_light">#FF80AB</color>
+    <color name="accent">#00BCD4</color>
+    <color name="background">#FAFAFA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="error">#F44336</color>
+
+    <!-- Цвета текста -->
+    <color name="text_primary">#DE000000</color>
+    <color name="text_secondary">#8A000000</color>
+    <color name="text_hint">#61000000</color>
+    <color name="text_on_primary">#FFFFFF</color>
+    <color name="text_on_accent">#000000</color>
+
+    <!-- Цвета элементов UI -->
+    <color name="floating_button_color">#FF4081</color>
+    <color name="floating_button_border">#FFFFFF</color>
+    <color name="stop_button_color">#F44336</color>
+    <color name="play_button_color">#4CAF50</color>
+    <color name="record_button_color">#F44336</color>
+
+    <!-- Цвета состояния -->
+    <color name="divider">#1F000000</color>
+    <color name="overlay">#99000000</color>
+    <color name="success">#4CAF50</color>
+    <color name="warning">#FF9800</color>
+    <color name="info">#2196F3</color>
+
+    <!-- Цвета для списка пресетов -->
+    <color name="preset_item_background">#FFFFFF</color>
+    <color name="preset_item_selected">#E3F2FD</color>
+    <color name="preset_item_ripple">#1E88E5</color>
+</resources>
