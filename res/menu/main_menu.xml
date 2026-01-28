@@ -12,4 +12,7 @@
     <item
         android:id="@+id/menu_close"
         android:title="Закрыть" />
+    <item
+        android:id="@+id/menu_test_record"
+        android:title="Тест записи" />
 </menu>

@@ -1,3 +1,4 @@
+
 package com.example.macrorecorder;
 
 import android.app.Notification;
@@ -185,9 +186,6 @@ public class MainService extends Service {
             PopupMenu popupMenu = new PopupMenu(this, anchor);
             popupMenu.getMenuInflater().inflate(R.menu.main_menu, popupMenu.getMenu());
 
-            // Временно добавьте тестовый пункт меню
-            popupMenu.getMenu().add("Тест записи");
-
             popupMenu.setOnMenuItemClickListener(item -> {
                 int id = item.getItemId();
 
@@ -200,11 +198,11 @@ public class MainService extends Service {
                 } else if (id == R.id.menu_record) {
                     startRecording();
                     return true;
+                } else if (id == R.id.menu_test_record) {
+                    testRecording();
+                    return true;
                 } else if (id == R.id.menu_close) {
                     stopSelf();
-                    return true;
-                } else if (item.getTitle().equals("Тест записи")) {
-                    testRecording();
                     return true;
                 }
 
@@ -219,29 +217,48 @@ public class MainService extends Service {
     }
 
     private void testRecording() {
-        showToast("Тест записи...");
+        showToast("Тест записи начат...");
         showDebugInfo();
+
+        // Проверяем, включен ли Accessibility Service
+        if (!isAccessibilityServiceEnabled()) {
+            showToast("Accessibility Service не включен!");
+            Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            return;
+        }
 
         MacroAccessibilityService service = MacroAccessibilityService.getInstance();
         if (service == null) {
-            showToast("Сервис = null");
-        } else if (!service.isServiceConnected()) {
-            showToast("Сервис не подключен");
-        } else {
-            showToast("Сервис готов!");
-
-            // Тестовая запись
-            service.startRecording("Тестовый макрос");
-            showToast("Запись начата");
-
-            // Остановить через 3 секунды
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                if (service.isRecording()) {
-                    service.stopRecording();
-                    showToast("Запись сохранена");
-                }
-            }, 3000);
+            showToast("Сервис недоступен (null)");
+            return;
         }
+
+        if (!service.isServiceConnected()) {
+            showToast("Сервис не подключен");
+            return;
+        }
+
+        showToast("Сервис готов! Начинаем тестовую запись...");
+
+        // Тестовая запись
+        service.startRecording("Тестовый макрос");
+        showToast("Запись начата! Выполняйте действия...");
+
+        // Остановить через 5 секунд
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (service.isRecording()) {
+                service.stopRecording();
+                showToast("Тестовая запись завершена и сохранена!");
+
+                // Показываем количество сохраненных действий
+                int actionCount = service.getRecordedActionsCount();
+                showToast("Сохранено действий: " + actionCount);
+            } else {
+                showToast("Запись не была активна");
+            }
+        }, 5000);
     }
 
     private void playMacro() {
@@ -293,6 +310,19 @@ public class MainService extends Service {
                     showToast("Не удалось инициализировать сервис. Перезапустите приложение.");
                 }
             }, 1000);
+        } else if (!service.isServiceConnected()) {
+            showToast("Сервис не подключен. Перезапуск...");
+            ensureAccessibilityService();
+
+            // После перезапуска ждем подключения и затем открываем диалог
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (MacroAccessibilityService.getInstance() != null &&
+                        MacroAccessibilityService.getInstance().isServiceConnected()) {
+                    showNameInputDialog();
+                } else {
+                    showToast("Сервис всё ещё не подключен. Проверьте настройки.");
+                }
+            }, 2000);
         } else {
             // Сервис доступен, показываем диалог
             showNameInputDialog();
@@ -323,6 +353,116 @@ public class MainService extends Service {
         Log.d("MainService", "Debug info: " + info.toString());
         // Можно показать Toast для отладки
         // showToast(info.toString());
+    }
+
+    private void simpleTest() {
+        Log.d("MainService", "=== ПРОСТОЙ ТЕСТ ===");
+
+        // 1. Проверка сервиса
+        MacroAccessibilityService service = MacroAccessibilityService.getInstance();
+        if (service == null) {
+            showToast("Сервис = NULL");
+            Log.e("MainService", "Сервис не существует");
+
+            // Пытаемся запустить
+            Intent intent = new Intent(this, MacroAccessibilityService.class);
+            startService(intent);
+            showToast("Запускаем сервис...");
+
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                MacroAccessibilityService newService = MacroAccessibilityService.getInstance();
+                if (newService != null) {
+                    showToast("Сервис запущен!");
+                    newService.testService();
+                } else {
+                    showToast("Не удалось запустить");
+                }
+            }, 2000);
+        } else {
+            showToast("Сервис найден!");
+            service.testService();
+
+            // Проверяем запись
+            if (!service.isRecording()) {
+                showToast("Начинаем тестовую запись");
+                service.startRecording("Тест " + System.currentTimeMillis());
+
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    if (service.isRecording()) {
+                        service.stopRecording();
+                        showToast("Тестовая запись завершена");
+                    }
+                }, 3000);
+            } else {
+                showToast("Уже идет запись");
+            }
+        }
+    }
+
+    private void testSimple() {
+        Log.d("MainService", "=== ПРОСТОЙ ТЕСТ ===");
+
+        // Проверяем доступность WindowManager
+        if (windowManager == null) {
+            windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        }
+
+        if (windowManager == null) {
+            showToast("WindowManager недоступен");
+            return;
+        }
+
+        // Создаем простую тестовую кнопку
+        Button testBtn = new Button(this);
+        testBtn.setText("ТЕСТ");
+        testBtn.setBackgroundColor(Color.GREEN);
+        testBtn.setTextColor(Color.BLACK);
+
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY :
+                        WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT
+        );
+        params.gravity = Gravity.CENTER;
+
+        testBtn.setOnClickListener(v -> {
+            showToast("Тестовая кнопка работает!");
+
+            // Проверка сервиса
+            MacroAccessibilityService service = MacroAccessibilityService.getInstance();
+            if (service != null) {
+                showToast("Сервис доступен");
+                if (service.isServiceConnected()) {
+                    showToast("Сервис подключен");
+                    service.startRecording("Тест " + System.currentTimeMillis());
+                    showToast("Запись начата");
+
+                    // Остановить через 3 сек
+                    new Handler().postDelayed(() -> {
+                        service.stopRecording();
+                        showToast("Запись остановлена");
+                        windowManager.removeView(testBtn);
+                    }, 3000);
+                } else {
+                    showToast("Сервис не подключен");
+                }
+            } else {
+                showToast("Сервис не найден");
+            }
+        });
+
+        try {
+            windowManager.addView(testBtn, params);
+            showToast("Тестовая кнопка создана");
+        } catch (Exception e) {
+            showToast("Ошибка: " + e.getMessage());
+            Log.e("MainService", "Ошибка: " + e.getMessage());
+        }
     }
 
     private boolean isAccessibilityServiceEnabled() {
